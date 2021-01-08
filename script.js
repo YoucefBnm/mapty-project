@@ -12,6 +12,7 @@ const inputElevation = document.querySelector('.form__input--elevation');
 class Workout {
     date = new Date()
     id = (Date.now() + '').slice(-10)
+    clicks = 0
     
     constructor(coords, distance, duration) {
         this.coords = coords // [lat, lng]
@@ -24,6 +25,10 @@ class Workout {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
         this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${months[this.date.getMonth()]} ${this.date.getDate()}`
+    }
+
+    click() {
+      this.clicks++
     }
 }
 
@@ -69,12 +74,15 @@ console.log(run1, cycle1)
 class App {
     // private
     #map;
+    #mapZoomLevel = 6;
     #mapEvent;
     #workouts = []
     constructor() {
         this._getPosition();
         form.addEventListener('submit', this._newWorkout.bind(this))
         inputType.addEventListener('change', this._toggleElevationField)
+        // event delegation => add event to parent element
+        containerWorkouts.addEventListener('click', this._moveToPopup.bind(this))
     }
 
     _getPosition() {
@@ -91,7 +99,7 @@ class App {
         const coords = [latitude, longitude]
         // 'map' is the id in html 
         // '13' is the level of zoom
-        this.#map = L.map('map').setView(coords, 5);
+        this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
         // change the default look of 'streetmap' by another
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -176,7 +184,6 @@ class App {
         this._renderWorkout(workout)
         // hid form + clear input fields
         this._hideForm();
-        //inputDistance.value = inputDuration.value = inputCadence.value = inputElevation.value = ''
     }
     // display marker 
     _renderWorkoutMarker(workout) {
@@ -189,7 +196,8 @@ class App {
                 closeOnClick: false,
                 className: `${workout.type}-popup`
                 }))
-                .setPopupContent('workout')
+                .setPopupContent(
+                  `${workout.type === 'running' ? '🏃‍♂️ ' : '🚴‍♀️ '} ${workout.description}`)
                 .openPopup();
     }
 
@@ -200,7 +208,7 @@ class App {
           <h2 class="workout__title">${workout.description}</h2>
           <div class="workout__details">
             <span class="workout__icon">${
-              workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'
+              workout.type === 'running' ? '🏃‍♂️ ' : '🚴‍♀️ '
             }</span>
             <span class="workout__value">${workout.distance}</span>
             <span class="workout__unit">km</span>
@@ -243,8 +251,29 @@ class App {
         `;
   
       form.insertAdjacentHTML('afterend', html);
-  
     }
+
+    _moveToPopup(e){
+      const workoutElement = e.target.closest('.workout')
+      console.log(workoutElement)
+
+      if(!workoutElement) return 
+      const workout = this.#workouts.find(work => work.id === workoutElement.dataset.id)
+
+      console.log(workout)
+
+      // move map to the clicked element with leaflet
+      this.#map.setView(workout.coords, this.#mapZoomLevel, {
+        animate: true,
+        pan: {
+          duration: 1
+        }
+      })
+
+      // using the public interface
+      workout.click()
+    }
+
 }
 
 const app = new App()
