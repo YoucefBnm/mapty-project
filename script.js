@@ -302,6 +302,11 @@ class App {
       })
     }
 
+    // public method (without '_')
+    reset() {
+      localStorage.removeItem('workouts')
+      location.reload()
+    }
 }
 
 const app = new App()
