@@ -112,6 +112,9 @@ class App {
         }).addTo(this.#map);
         // handle clicks on map
         this.#map.on('click', this._showForm.bind(this))
+        this.#workouts.forEach(workout => {
+          this._renderWorkoutMarker(workout)
+        })
     }
 
     _showForm(mapE) {
@@ -280,7 +283,7 @@ class App {
       })
 
       // using the public interface
-      workout.click()
+      // workout.click()
     }
 
     _setLocalStorage() {
